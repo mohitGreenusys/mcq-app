@@ -4,6 +4,8 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
+const userRouter = require('./routes/user.routes');
+const adminRouter = require('./routes/admin.routes');
 
 const app = express();
 
@@ -13,6 +15,11 @@ app.use(cors());
 app.use(morgan('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+
+app.use("/user",userRouter);
+
+app.use("/admin",adminRouter);
 
 app.use("/",(req,res)=>{
     res.send("i am alive buddy 😊");

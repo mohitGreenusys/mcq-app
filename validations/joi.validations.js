@@ -19,6 +19,7 @@ const adminRegisterValidation = joi.object({
 })
 
 const addQuestionValidation = joi.object({
+    img:joi.string(),
     question:joi.string().required(),
     option1:joi.string().required(),
     option2:joi.string().required(),

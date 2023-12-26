@@ -7,7 +7,7 @@ const questionPaperSchema = new mongoose.Schema({
         length:20,
     },
     time:{
-        type:Number,
+        type: Number,
         default:0,
     },
     difficulty:{

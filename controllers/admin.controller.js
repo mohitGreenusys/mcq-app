@@ -1,9 +1,9 @@
 const admin = require("../models/admin.model.js");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const { adminRegisterValidation } = require("../validations/joi.validations.js");
+const { adminRegisterValidation, addQuestionValidation } = require("../validations/joi.validations.js");
 const userModel = require("../models/user.model.js");
-const { default: questionModel } = require("../models/question.model.js");
+const questionModel  = require("../models/question.model.js");
 const questionPaperModel = require("../models/questionPaper.model.js");
 
 const routes = {};
@@ -38,6 +38,8 @@ routes.login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
+        if(!email || !password) return res.status(400).json({ error: "Please enter all the fields" });
+
         const user = await admin.findOne({ email });
 
         if (!user) return res.status(404).json({ error: "User not found" });
@@ -60,7 +62,7 @@ routes.getUsers = async (req, res) => {
     try {
         const users = await userModel.find();
 
-        return res.status(200).json({ result: users });
+        return res.status(200).json({ users });
 
     } catch (error) {
         console.log(error);
@@ -109,7 +111,7 @@ routes.addQuestion = async (req, res) => {
 
     } catch (error) {
         console.log(error);
-        res.status(500).json({ error: "Something went wrong" });
+        res.status(500).json({ error: "Something Went wrong" });
     }
 }
 
@@ -172,3 +174,5 @@ routes.makeQuestionPaper = async (req, res) => {
         res.status(500).json({ error: "Something went wrong" });
     }
 }
+
+module.exports = routes;

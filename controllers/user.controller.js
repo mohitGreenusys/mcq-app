@@ -3,7 +3,7 @@ const Test = require("../models/test.model.js");
 const Question = require("../models/question.model.js");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { registerValidation } = require("../validations/joi.validations.js");
+const { registerValidation, loginValidation } = require("../validations/joi.validations.js");
 const sendOTP = require("../validations/sentOtp.js");
 
 const routes = {};
@@ -11,12 +11,17 @@ const routes = {};
 routes.register = async (req, res) => {
     try {
         const {name, email, password, employeeId} = req.body;
-
+        
         const {error} = registerValidation.validate(req.body);
         if (error) return res.status(400).json({ error: error.details[0].message });
 
         const emailExisting = await User.findOne({ email });
-        if (emailExisting) return res.status(400).json({ error: "Email already exists" });
+
+        if (emailExisting.isVerified) return res.status(400).json({ error: "Email already exists" });
+
+        if(emailExisting){
+            await emailExisting.deleteOne();
+        }
 
         const employeeIdExists = await User.findOne({ employeeId });
         if (employeeIdExists) return res.status(400).json({ error: "Employee Id already exists" });
@@ -28,6 +33,7 @@ routes.register = async (req, res) => {
             password: bcryptPassword,
             employeeId,
             otp: Math.floor(1000 + Math.random() * 9000),
+            otpExpires: Date.now() + 10 * 60 * 1000,
         });
 
         return res.status(201).json({ result: user, message: "User registered successfully" });
@@ -66,7 +72,7 @@ routes.login = async (req, res) => {
     try {
         const { employeeId , password } = req.body;
 
-        const {error} = registerValidation.validate(req.body);
+        const {error} = loginValidation.validate(req.body);
         
         if (error) return res.status(400).json({ error: error.details[0].message });
 
@@ -130,6 +136,10 @@ routes.resetPassword = async (req, res) => {
 
         if (!user) return res.status(400).json({ error: "User not found" });
 
+        const isMatch = await bcrypt.compare(password, user.password);
+
+        if (isMatch) return res.status(400).json({ error: "New password cannot be same as old password" });
+
         const bcryptPassword = await bcrypt.hash(password, 12);
         user.password = bcryptPassword;
         await user.save();
@@ -156,7 +166,7 @@ routes.updateProfile = async (req, res) => {
     try {
         const { name, email, password, newPassword } = req.body;
 
-        if (!name || !email || !(password && newPassword)) return res.status(400).json({ error: "Please enter all the fields" });
+        if (!name && !email && !(password && newPassword)) return res.status(400).json({ error: "Please enter all the fields" });
 
         const user = await User.findById(req.userId);
 
@@ -172,8 +182,12 @@ routes.updateProfile = async (req, res) => {
 
         if(email){
             if(email === user.email){
-                return res.status(400).json({ error: "Email already exists" });
+                return res.status(400).json({ error: "Email is same" });
             }
+
+            const ifEmail = await User.findOne({ email });
+            if (ifEmail) return res.status(400).json({ error: "Email already exists" });
+
             sendOTP(email, user.otp, "Email Verification OTP");
             user.otpExpires = Date.now() + 10 * 60 * 1000;
             user.otp = Math.floor(1000 + Math.random() * 9000);
