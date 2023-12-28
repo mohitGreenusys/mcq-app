@@ -13,18 +13,18 @@ routes.register = async (req, res) => {
         const {name, email, password, employeeId} = req.body;
         
         const {error} = registerValidation.validate(req.body);
-        if (error) return res.status(400).json({ error: error.details[0].message });
+        if (error) return res.status(200).json({ error: error.details[0].message });
 
         const emailExisting = await User.findOne({ email });
 
-        if (emailExisting.isVerified) return res.status(400).json({ error: "Email already exists" });
+        if (emailExisting && emailExisting.isVerified) return res.status(200).json({ error: "Email already exists" });
 
         if(emailExisting){
             await emailExisting.deleteOne();
         }
 
         const employeeIdExists = await User.findOne({ employeeId });
-        if (employeeIdExists) return res.status(400).json({ error: "Employee Id already exists" });
+        if (employeeIdExists) return res.status(200).json({ error: "Employee Id already exists" });
 
         const bcryptPassword = await bcrypt.hash(password, 12);
         const user = await User.create({
@@ -36,11 +36,11 @@ routes.register = async (req, res) => {
             otpExpires: Date.now() + 10 * 60 * 1000,
         });
 
-        return res.status(201).json({ result: user, message: "User registered successfully" });
+        return res.status(200).json({ result: user, message: "User registered successfully" });
 
     } catch (error) {
         console.log(error);
-        res.status(500).json({ error: "Something went wrong" });
+        res.status(200).json({ error: "Something went wrong" });
     }
 }
 
@@ -48,13 +48,13 @@ routes.verifyOtp = async (req, res) => {
     try{
         const { id, otp } = req.body;
 
-        if(!id || !otp) return res.status(400).json({ error: "Please enter all the fields", result: false });
+        if(!id || !otp) return res.status(200).json({ error: "Please enter all the fields", result: false });
 
         const user = await User.findById(id);
 
-        if(user.otpExpires < Date.now()) return res.status(400).json({ error: "OTP expired", result: false });
+        if(user.otpExpires < Date.now()) return res.status(200).json({ error: "OTP expired", result: false });
 
-        if(user.otp !== otp) return res.status(400).json({ error: "Invalid OTP", result: false });
+        if(user.otp !== otp) return res.status(200).json({ error: "Invalid OTP", result: false });
 
         user.isVerified = true;
         
@@ -64,7 +64,7 @@ routes.verifyOtp = async (req, res) => {
     }
     catch(error){
         console.log(error);
-        res.status(500).json({ error: "Something went wrong" });
+        res.status(200).json({ error: "Something went wrong" });
     }
 }
 
@@ -74,19 +74,19 @@ routes.login = async (req, res) => {
 
         const {error} = loginValidation.validate(req.body);
         
-        if (error) return res.status(400).json({ error: error.details[0].message });
+        if (error) return res.status(200).json({ error: error.details[0].message });
 
-        if (!employeeId || !password) return res.status(400).json({ error: "Please enter all the fields" });
+        if (!employeeId || !password) return res.status(200).json({ error: "Please enter all the fields" });
 
         const user = await User.findOne({ employeeId });
 
-        if (!user) return res.status(400).json({ error: "User not found" });
+        if (!user) return res.status(200).json({ error: "User not found" });
 
-        if (!user.isVerified) return res.status(400).json({ error: "Please verify your email" });
+        if (!user.isVerified) return res.status(200).json({ error: "Please verify your email" });
 
         const isMatch = await bcrypt.compare(password, user.password);
 
-        if (!isMatch) return res.status(400).json({ error: "Invalid credentials" });
+        if (!isMatch) return res.status(200).json({ error: "Invalid credentials" });
 
         const token = jwt.sign({ id: user._id, role: "user" }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
@@ -94,7 +94,7 @@ routes.login = async (req, res) => {
 
     } catch (error) {
         console.log(error);
-        res.status(500).json({ error: "Something went wrong" });
+        res.status(200).json({ error: "Something went wrong" });
     }
 }
 
@@ -102,12 +102,12 @@ routes.forgetPassword = async (req, res) => {
     try {
         const { email } = req.body;
 
-        if (!email) return res.status(400).json({ error: "Please enter all the fields" });
+        if (!email) return res.status(200).json({ error: "Please enter all the fields" });
 
         const newOtp = Math.floor(1000 + Math.random() * 9000);
 
         const user = await User.findOne({ email });
-        if (!user) return res.status(400).json({ error: "User not found" });
+        if (!user) return res.status(200).json({ error: "User not found" });
 
         user.otp = newOtp;
         user.otpExpires = Date.now() + 10 * 60 * 1000;
@@ -121,7 +121,7 @@ routes.forgetPassword = async (req, res) => {
 
     } catch (error) {
         console.log(error);
-        res.status(500).json({ error: "Something went wrong" });
+        res.status(200).json({ error: "Something went wrong" });
         
     }
 }
@@ -130,15 +130,15 @@ routes.resetPassword = async (req, res) => {
     try {
         const { id,password} = req.body;
 
-        if (!id || !password) return res.status(400).json({ error: "Please enter all the fields" });
+        if (!id || !password) return res.status(200).json({ error: "Please enter all the fields" });
 
         const user = await User.findById(id);
 
-        if (!user) return res.status(400).json({ error: "User not found" });
+        if (!user) return res.status(200).json({ error: "User not found" });
 
         const isMatch = await bcrypt.compare(password, user.password);
 
-        if (isMatch) return res.status(400).json({ error: "New password cannot be same as old password" });
+        if (isMatch) return res.status(200).json({ error: "New password cannot be same as old password" });
 
         const bcryptPassword = await bcrypt.hash(password, 12);
         user.password = bcryptPassword;
@@ -148,7 +148,7 @@ routes.resetPassword = async (req, res) => {
 
     } catch (error) {
         console.log(error);
-        res.status(500).json({ error: "Something went wrong" });
+        res.status(200).json({ error: "Something went wrong" });
     }
 }
 
@@ -158,7 +158,7 @@ routes.getProfile = async (req, res) => {
         return res.status(200).json({ result: user });
     } catch (error) {
         console.log(error);
-        res.status(500).json({ error: "Something went wrong" });
+        res.status(200).json({ error: "Something went wrong" });
     }
 }
 
@@ -166,27 +166,27 @@ routes.updateProfile = async (req, res) => {
     try {
         const { name, email, password, newPassword } = req.body;
 
-        if (!name && !email && !(password && newPassword)) return res.status(400).json({ error: "Please enter all the fields" });
+        if (!name && !email && !(password && newPassword)) return res.status(200).json({ error: "Please enter all the fields" });
 
         const user = await User.findById(req.userId);
 
-        if (!user) return res.status(400).json({ error: "User not found" });
+        if (!user) return res.status(200).json({ error: "User not found" });
 
         if(name) user.name = name;
         if(password && newPassword){
             const isMatch = await bcrypt.compare(password, user.password);
-            if (!isMatch) return res.status(400).json({ error: "Invalid credentials" });
+            if (!isMatch) return res.status(200).json({ error: "Invalid credentials" });
             const bcryptPassword = await bcrypt.hash(newPassword, 12);
             user.password = bcryptPassword;
         }
 
         if(email){
             if(email === user.email){
-                return res.status(400).json({ error: "Email is same" });
+                return res.status(200).json({ error: "Email is same" });
             }
 
             const ifEmail = await User.findOne({ email });
-            if (ifEmail) return res.status(400).json({ error: "Email already exists" });
+            if (ifEmail) return res.status(200).json({ error: "Email already exists" });
 
             sendOTP(email, user.otp, "Email Verification OTP");
             user.otpExpires = Date.now() + 10 * 60 * 1000;
@@ -201,7 +201,7 @@ routes.updateProfile = async (req, res) => {
 
     } catch (error) {
         console.log(error);
-        res.status(500).json({ error: "Something went wrong" });
+        res.status(200).json({ error: "Something went wrong" });
     }
 }
 
@@ -209,13 +209,13 @@ routes.verifyEmail = async (req, res) => {
     try{
         const { otp, email } = req.body;
 
-        if( !otp || !email ) return res.status(400).json({ error: "Please enter all the fields", result: false });
+        if( !otp || !email ) return res.status(200).json({ error: "Please enter all the fields", result: false });
 
         const user = await User.findById(req.userId);
 
-        if(user.otpExpires < Date.now()) return res.status(400).json({ error: "OTP expired", result: false });
+        if(user.otpExpires < Date.now()) return res.status(200).json({ error: "OTP expired", result: false });
 
-        if(user.otp !== otp) return res.status(400).json({ error: "Invalid OTP", result: false });
+        if(user.otp !== otp) return res.status(200).json({ error: "Invalid OTP", result: false });
 
         // user.isVerified = true;
         user.email = email;
@@ -225,7 +225,7 @@ routes.verifyEmail = async (req, res) => {
     }
     catch(error){
         console.log(error);
-        res.status(500).json({ error: "Something went wrong" });
+        res.status(200).json({ error: "Something went wrong" });
     }
 }
 
@@ -233,11 +233,11 @@ routes.resendOtp = async (req, res) => {
     try{
         const { id } = req.body;
 
-        if(!id) return res.status(400).json({ error: "Please enter all the fields", result: false });
+        if(!id) return res.status(200).json({ error: "Please enter all the fields", result: false });
 
         const user = await User.findById(id);
 
-        // if(user.otpExpires < Date.now()) return res.status(400).json({ error: "OTP expired", result: false });
+        // if(user.otpExpires < Date.now()) return res.status(200).json({ error: "OTP expired", result: false });
 
         user.otp = Math.floor(1000 + Math.random() * 9000);
         user.otpExpires = Date.now() + 10 * 60 * 1000;
@@ -249,7 +249,7 @@ routes.resendOtp = async (req, res) => {
     }
     catch(error){
         console.log(error);
-        res.status(500).json({ error: "Something went wrong" });
+        res.status(200).json({ error: "Something went wrong" });
     }
 }
 
