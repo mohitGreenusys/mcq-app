@@ -10,5 +10,8 @@ routes.post('/addQuestion',auth, adminController.addQuestion);
 routes.patch('/updateQuestion/:id',auth, adminController.updateQuestion);
 routes.delete('/deleteQuestion/:id',auth, adminController.deleteQuestion);
 routes.post('/generateQuestionPaper',auth, adminController.makeQuestionPaper);
+routes.get('/getQuestionPapers',auth, adminController.getQuestionPapers);
+routes.get('/getQuestionPaper/:id',auth, adminController.getQuestionPaper);
+routes.get('/tests',auth, adminController.getTests);
 
 module.exports = routes;

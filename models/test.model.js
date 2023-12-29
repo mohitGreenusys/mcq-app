@@ -1,14 +1,14 @@
 const mongoose = require("mongoose");
 
 const testSchema = new mongoose.Schema({
-  questions: {
+  questionPaper: {
     type: [mongoose.Schema.Types.ObjectId],
-    ref: "Question",
-    length: 20,
+    ref: "QuestionPaper",
+    // length: 20,
   },
   answers: {
     type: [String],
-    length: 20,
+    // length: 20,
   },
   user:{
     type:mongoose.Schema.Types.ObjectId,

@@ -175,4 +175,47 @@ routes.makeQuestionPaper = async (req, res) => {
     }
 }
 
+routes.getQuestionPapers = async (req, res) => {
+    try {
+        // const { id } = req.params;
+
+        const questionPaper = await questionPaperModel.find().populate("questions");
+
+        return res.status(200).json({ result: questionPaper });
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: "Something went wrong" });
+    }
+}
+
+routes.getQuestionPaper = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const questionPaper = await questionPaperModel.findById(id).populate("questions");
+
+        return res.status(200).json({ result: questionPaper });
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: "Something went wrong" });
+    }
+}
+
+routes.getTests = async (req, res) => {
+    try {
+        const tests = await testModel.find().populate("questionPaper user");
+
+        return res.status(200).json({ result: tests });
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: "Something went wrong" });
+    }
+}
+
+
+
+
 module.exports = routes;
